@@ -1,6 +1,7 @@
 import argparse
 import os
 import sys
+import json
 
 from openai import OpenAI
 
@@ -21,23 +22,55 @@ def main():
     chat = client.chat.completions.create(
         model="anthropic/claude-haiku-4.5",
         messages=[{"role": "user", "content": args.p}],
-        tools=[{
-            "type":"function",
-            "function":{
-                "name":"Read",
-                "description":"Read and return the contents of a file"
+        tools=[
+            {
+                "type": "function",
+                "function": {
+                    "name": "Read",
+                    "description": "Read and return the contents of a file",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "file_path": {
+                                "type": "string",
+                                "description": "The path to the file to read",
+                            }
+                        },
+                        "required": ["file_path"],
+                    },
+                },
             }
-        }]
+        ],
     )
 
     if not chat.choices or len(chat.choices) == 0:
         raise RuntimeError("no choices in response")
 
-    # You can use print statements as follows for debugging, they'll be visible when running tests.
-    print("Logs from your program will appear here!", file=sys.stderr)
+    if chat.choices[0].message.tool_calls:
+        tool_call = chat.choices[0].message.tool_calls[0]
+        # function_name = tool_call.function.name
+        if tool_call.type == "function":
+            function_name = tool_call.function.name
+            function_args = json.loads(tool_call.function.arguments)
 
-    # TODO: Uncomment the following line to pass the first stage
-    print(chat.choices[0].message.content)
+            match function_name:
+                case "Read":
+                    file_path = function_args['file_path']
+                    try:
+                        with open(file_path, 'r') as f:
+                            file_content = f.read()
+                            print(file_content)
+                    except Exception as e:
+                        print(f"Error reading file: {e}", file=sys.stderr)
+                    
+                case _:
+                    print(f"Custom tool call type: {tool_call.type}")
+    else:
+        print(chat.choices[0].message.content)
+
+
+
+
 
 
 if __name__ == "__main__":
