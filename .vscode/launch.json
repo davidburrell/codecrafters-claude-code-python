@@ -11,7 +11,7 @@
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal",
-            "args": ["-p","What is the content of main.py"]
+            "args": ["-p","Use README.md to figure out the chemical expire period"]
         }
     ]
 }
