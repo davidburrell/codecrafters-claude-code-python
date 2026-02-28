@@ -37,6 +37,26 @@ def main():
                 },
         }
 
+    }, {
+        "type": "function",
+        "function": {
+            "name": "Write",
+            "description": "Write content to a file",
+            "parameters": {
+                "type": "object",
+                "required": ["file_path", "content"],
+                "properties": {
+                    "file_path": {
+                        "type": "string",
+                        "description": "The path of the file to write to"
+                    },
+                    "content": {
+                        "type": "string",
+                        "description": "The content to write to the file"
+                    }
+                }
+            }
+        }
     }]
 
     while True:
@@ -75,6 +95,19 @@ def main():
                                 })
                         except Exception as e:
                             print(f"Error reading file: {e}", file=sys.stderr)
+                    case "Write":
+                        file_path = function_args['file_path']
+                        file_content = function_args['content']
+                        try:
+                            with open(file_path, "w") as f:
+                                f.write(file_content)
+                                conversationLog.append({
+                                    "role": "tool",
+                                    "tool_call_id": tool_call.id,
+                                    "content": file_content
+                                })
+                        except Exception as e:
+                            print(f'Error writing file: {e}', file=sys.stderr)
 
                     case _:
                         print(f"Custom tool call type: {tool_call.type}")
